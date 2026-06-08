@@ -38,12 +38,31 @@ async def _get_play_url(client: httpx.AsyncClient, params: dict, qn: int = 80, f
 def _get_client() -> httpx.AsyncClient:
     return httpx.AsyncClient(headers=BILIBILI_HEADERS, timeout=30)
 
+
+# ---- 共用逻辑抽成私有方法，避免重复代码 ----
+
+async def _video_download(bvid: str, qn: int, fnval: int):
+    async with _get_client() as client:
+        info = await _get_info(client, bvid=bvid)
+        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+
+async def _video_download_avid(aid: int, qn: int, fnval: int):
+    async with _get_client() as client:
+        info = await _get_info(client, aid=aid)
+        return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+
+
+# ---- 热点 ----
+
 @router.get("/hot")
 async def get_hot(ps: int = 50):
     ps = min(ps, 100)
     async with _get_client() as client:
         resp = await client.get(f"{API_BASE}/x/web-interface/popular", params={"ps": ps})
         return resp.json()
+
+
+# ---- 视频信息 ----
 
 @router.get("/video/{bvid}")
 async def get_video(bvid: str):
@@ -57,17 +76,30 @@ async def post_video(request: BvRequest):
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"bvid": request.bvid})
         return resp.json()
 
-@router.api_route("/video/download/{bvid}", methods=["GET", "POST"])
-async def get_video_download(bvid: str, qn: int = 80, fnval: int = 0):
-    async with _get_client() as client:
-        info = await _get_info(client, bvid=bvid)
-        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
-@router.api_route("/video/download/1080/{bvid}", methods=["GET", "POST"])
+# ---- 视频下载（BVID） ----
+
+@router.get("/video/download/{bvid}")
+async def get_video_download(bvid: str, qn: int = 80, fnval: int = 0):
+    return await _video_download(bvid, qn, fnval)
+
+@router.post("/video/download/{bvid}")
+async def post_video_download(bvid: str, qn: int = 80, fnval: int = 0):
+    return await _video_download(bvid, qn, fnval)
+
+
+# ---- 视频下载 1080（BVID） ----
+
+@router.get("/video/download/1080/{bvid}")
 async def get_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
-    async with _get_client() as client:
-        info = await _get_info(client, bvid=bvid)
-        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    return await _video_download(bvid, qn, fnval)
+
+@router.post("/video/download/1080/{bvid}")
+async def post_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
+    return await _video_download(bvid, qn, fnval)
+
+
+# ---- 视频信息（AID） ----
 
 @router.get("/video/avid/{aid}")
 async def get_video_by_aid(aid: int):
@@ -81,11 +113,19 @@ async def post_video_by_aid(request: AvidRequest):
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"aid": request.avid})
         return resp.json()
 
-@router.api_route("/video/download/avid/{aid}", methods=["GET", "POST"])
+
+# ---- 视频下载（AID） ----
+
+@router.get("/video/download/avid/{aid}")
 async def get_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
-    async with _get_client() as client:
-        info = await _get_info(client, aid=aid)
-        return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    return await _video_download_avid(aid, qn, fnval)
+
+@router.post("/video/download/avid/{aid}")
+async def post_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
+    return await _video_download_avid(aid, qn, fnval)
+
+
+# ---- 搜索 ----
 
 async def _search_bilibili(keyword: str, page: int, page_size: int):
     page_size = min(page_size, 50)

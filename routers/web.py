@@ -17,8 +17,9 @@ HOP_BY_HOP_HEADERS = {
 def _should_remove_header(header_name: str) -> bool:
     return header_name.lower() in HOP_BY_HOP_HEADERS
 
-@router.api_route("/browse/{token}/{url:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
-async def browse_all(token: str, url: str, req: Request):
+
+# 抽成私有方法，避免重复代码
+async def _browse(token: str, url: str, req: Request):
     if token != WEB_BROWSE_TOKEN:
         raise HTTPException(status_code=401, detail="Authentication Fails")
 
@@ -56,3 +57,33 @@ async def browse_all(token: str, url: str, req: Request):
             headers=response_headers,
             media_type="text/plain"
         )
+
+
+# 为每个 HTTP 方法单独注册路由，避免重复的 Operation ID
+@router.get("/browse/{token}/{url:path}")
+async def browse_get(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.post("/browse/{token}/{url:path}")
+async def browse_post(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.put("/browse/{token}/{url:path}")
+async def browse_put(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.delete("/browse/{token}/{url:path}")
+async def browse_delete(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.patch("/browse/{token}/{url:path}")
+async def browse_patch(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.head("/browse/{token}/{url:path}")
+async def browse_head(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
+
+@router.options("/browse/{token}/{url:path}")
+async def browse_options(token: str, url: str, req: Request):
+    return await _browse(token, url, req)
