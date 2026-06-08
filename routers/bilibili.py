@@ -1,6 +1,3 @@
-import time
-import hashlib
-import urllib.parse
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import httpx
@@ -14,9 +11,6 @@ BILIBILI_HEADERS = {
 
 API_BASE = "https://api.bilibili.com"
 
-_WBI_KEYS = None
-_WBI_KEYS_EXPIRE = 0
-
 class BvRequest(BaseModel):
     bvid: str
 
@@ -27,31 +21,6 @@ class SearchRequest(BaseModel):
 
 class AvidRequest(BaseModel):
     avid: int
-
-async def _get_wbi_keys() -> tuple[str, str]:
-    global _WBI_KEYS, _WBI_KEYS_EXPIRE
-    now = time.time()
-    if _WBI_KEYS and now < _WBI_KEYS_EXPIRE:
-        return _WBI_KEYS
-    async with httpx.AsyncClient(headers=BILIBILI_HEADERS, timeout=10) as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/nav")
-        data = resp.json()
-        if data.get("code") != 0:
-            raise HTTPException(502, "获取B站密钥失败")
-        wbi = data["data"]["wbi_img"]
-        img_key = wbi["img_url"].rsplit("/", 1)[1].split(".")[0]
-        sub_key = wbi["sub_url"].rsplit("/", 1)[1].split(".")[0]
-        _WBI_KEYS = (img_key, sub_key)
-        _WBI_KEYS_EXPIRE = now + 600
-        return _WBI_KEYS
-
-def _sign_wbi(params: dict, img_key: str, sub_key: str) -> dict:
-    mix_key = sub_key[:4] + img_key[:4]
-    params["wts"] = int(time.time())
-    keys = sorted(params.keys())
-    query = urllib.parse.urlencode({k: params[k] for k in keys})
-    params["w_rid"] = hashlib.md5((query + mix_key).encode()).hexdigest()
-    return params
 
 async def _get_info(client: httpx.AsyncClient, **params) -> dict:
     resp = await client.get(f"{API_BASE}/x/web-interface/view", params=params)
@@ -121,8 +90,6 @@ async def get_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
 async def _search_bilibili(keyword: str, page: int, page_size: int):
     page_size = min(page_size, 50)
     params = {"search_type": "video", "keyword": keyword, "page": page, "page_size": page_size}
-    img_key, sub_key = await _get_wbi_keys()
-    params = _sign_wbi(params, img_key, sub_key)
     async with _get_client() as client:
         resp = await client.get(f"{API_BASE}/x/web-interface/wbi/search/type", params=params)
         return resp.json()

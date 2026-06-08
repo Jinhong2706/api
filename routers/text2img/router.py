@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from .render import ScreenshotOptions, Text2ImgRender
 from .util import cleanup_expired_files
 
-router = APIRouter()
+router = APIRouter(tags=["text2img"])
 
 render = Text2ImgRender()
 
