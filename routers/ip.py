@@ -3,22 +3,30 @@ import httpx
 
 router = APIRouter(prefix="/ip", tags=["IP"])
 
+PRIVATE_RANGES = [
+    ("10", None),
+    ("172", 16, 31),
+    ("192", 168),
+]
 
 def _is_private_ip(ip: str) -> bool:
     if ip in ("unknown", "0.0.0.0", "127.0.0.1", "::1"):
         return True
     parts = ip.split(".")
-    if len(parts) == 4:
-        first = int(parts[0])
-        second = int(parts[1]) if len(parts) > 1 else 0
-        if first == 10:
+    if len(parts) != 4:
+        return False
+    first = int(parts[0])
+    if first == 10:
+        return True
+    if first == 172 and len(parts) > 1:
+        second = int(parts[1])
+        if 16 <= second <= 31:
             return True
-        if first == 172 and 16 <= second <= 31:
-            return True
-        if first == 192 and second == 168:
-            return True
+    if first == 192 and len(parts) > 1 and int(parts[1]) == 168:
+        return True
     return False
 
+LOCATION_FIELDS = "status,message,country,regionName,city,lat,lon"
 
 @router.get("/")
 async def get_client_ip(request: Request):
@@ -34,7 +42,7 @@ async def get_client_ip(request: Request):
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 f"http://ip-api.com/json/{client_ip}",
-                params={"fields": "status,message,country,regionName,city,lat,lon"}
+                params={"fields": LOCATION_FIELDS}
             )
             data = resp.json()
             if data.get("status") == "success":

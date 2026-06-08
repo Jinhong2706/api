@@ -14,10 +14,8 @@ HOP_BY_HOP_HEADERS = {
     "te", "trailers", "transfer-encoding", "upgrade", "content-length"
 }
 
-
 def _should_remove_header(header_name: str) -> bool:
     return header_name.lower() in HOP_BY_HOP_HEADERS
-
 
 @router.api_route("/browse/{token}/{url:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def browse_all(token: str, url: str, req: Request):
@@ -38,7 +36,7 @@ async def browse_all(token: str, url: str, req: Request):
 
     body = await req.body()
 
-    async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         resp = await client.request(
             method=req.method,
             url=url,

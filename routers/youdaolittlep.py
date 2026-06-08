@@ -26,11 +26,9 @@ MODEL_TO_VOICE = {
     "youxiaojin-tts": "youxiaojin",
 }
 
-
 class ChatMessage(BaseModel):
     role: str
     content: Union[str, List[Any]]
-
 
 class ChatCompletionRequest(BaseModel):
     model: Optional[str] = "doubao-1.5-pro-32k"
@@ -38,23 +36,19 @@ class ChatCompletionRequest(BaseModel):
     stream: Optional[bool] = False
     max_tokens: Optional[int] = None
 
-
 class ChatCompletionChoiceMessage(BaseModel):
     role: str = "assistant"
     content: str
-
 
 class ChatCompletionChoice(BaseModel):
     index: int = 0
     message: ChatCompletionChoiceMessage
     finish_reason: str = "stop"
 
-
 class ChatCompletionUsage(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
-
 
 class ChatCompletionResponse(BaseModel):
     id: str
@@ -65,18 +59,15 @@ class ChatCompletionResponse(BaseModel):
     usage: ChatCompletionUsage = ChatCompletionUsage()
     system_fingerprint: Optional[str] = "fp_dictpen"
 
-
 class ModelObject(BaseModel):
     id: str
     object: str = "model"
     created: int
     owned_by: str = "youdao"
 
-
 class ModelsResponse(BaseModel):
     object: str = "list"
     data: List[ModelObject]
-
 
 class BalanceInfo(BaseModel):
     currency: str = "CNY"
@@ -84,17 +75,14 @@ class BalanceInfo(BaseModel):
     granted_balance: str = "0.00"
     topped_up_balance: str = "27065590.06"
 
-
 class BalanceResponse(BaseModel):
     is_available: bool = True
     balance_infos: List[BalanceInfo] = [BalanceInfo()]
-
 
 class SpeechRequest(BaseModel):
     model: str
     input: str
     voice: Optional[str] = None
-
 
 def verify_ai_token(authorization: Optional[str] = Header(None)):
     if not AI_TOKEN:
@@ -104,15 +92,12 @@ def verify_ai_token(authorization: Optional[str] = Header(None)):
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or token != AI_TOKEN:
         raise HTTPException(status_code=401, detail="Authentication Fails")
-    return True
-
 
 def _generate_sign(device_sn: str, key_id: str, mystic_time: str) -> str:
     return hashlib.md5(
         f"deviceSn={device_sn}&keyid={key_id}&mysticTime={mystic_time}&key={FIXED_KEY}"
         .encode('utf-8')
     ).hexdigest()
-
 
 def _extract_text_from_content(content: Union[str, List[Any]]) -> str:
     if isinstance(content, str):
@@ -125,18 +110,15 @@ def _extract_text_from_content(content: Union[str, List[Any]]) -> str:
         return " ".join(parts)
     return ""
 
-
 def _estimate_tokens(text: str) -> int:
     chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', text))
     english_words = len(re.findall(r'[a-zA-Z]+', text))
     other_chars = len(text) - chinese_chars - sum(len(w) for w in re.findall(r'[a-zA-Z]+', text))
     return int(chinese_chars + english_words * 1.3 + other_chars * 0.5)
 
-
 def _build_message_contents(question: str) -> str:
     content_obj = [{"text": {"content": question}, "type": "text"}]
     return json.dumps(content_obj, ensure_ascii=False)
-
 
 def _build_conversation_prompt(messages: List[ChatMessage]) -> str:
     lines = []
@@ -145,7 +127,6 @@ def _build_conversation_prompt(messages: List[ChatMessage]) -> str:
         content = _extract_text_from_content(msg.content)
         lines.append(f"{role.capitalize()}: {content}")
     return "\n".join(lines)
-
 
 async def _yield_youdao_events(question: str) -> AsyncGenerator[tuple[Optional[str], Optional[str]], None]:
     mystic_time = str(int(time.time() * 1000))
@@ -201,7 +182,6 @@ async def _yield_youdao_events(question: str) -> AsyncGenerator[tuple[Optional[s
                             if content := text_info.get("content", ""):
                                 yield (content, None)
 
-
 async def _fetch_youdao_answer_non_stream(question: str) -> tuple[str, Optional[str]]:
     answer = ""
     chat_id = None
@@ -220,7 +200,6 @@ async def _fetch_youdao_answer_non_stream(question: str) -> tuple[str, Optional[
     if not answer:
         raise HTTPException(status_code=500, detail="服务器内部错误")
     return answer, chat_id
-
 
 async def _stream_youdao_to_openai(question: str) -> AsyncGenerator[str, None]:
     request_id = uuid.uuid4().hex[:12]
@@ -290,7 +269,6 @@ async def _stream_youdao_to_openai(question: str) -> AsyncGenerator[str, None]:
     yield f"data: {json.dumps(final_chunk, ensure_ascii=False)}\n\n"
     yield "data: [DONE]\n\n"
 
-
 def _split_text(text: str, max_len: int = MAX_TEXT_LEN) -> list[str]:
     sentences = re.split(r'(?<=[。！？\n])', text)
     chunks = []
@@ -312,7 +290,6 @@ def _split_text(text: str, max_len: int = MAX_TEXT_LEN) -> list[str]:
         else:
             final.append(chunk)
     return final
-
 
 async def _tts_request(text: str, voice: str) -> bytes:
     mystic_time = str(int(time.time() * 1000))
@@ -346,7 +323,6 @@ async def _tts_request(text: str, voice: str) -> bytes:
             raise HTTPException(status_code=500, detail="服务器内部错误")
         return resp.content
 
-
 async def _combine_audio_chunks(text: str, voice: str) -> bytes:
     chunks = _split_text(text)
     if not chunks:
@@ -360,11 +336,9 @@ async def _combine_audio_chunks(text: str, voice: str) -> bytes:
             raise HTTPException(status_code=500, detail="服务器内部错误")
     return b"".join(audios)
 
-
 @router.get("/user/balance", response_model=BalanceResponse)
 async def get_user_balance(valid: bool = Depends(verify_ai_token)):
     return BalanceResponse()
-
 
 @router.get("/models", response_model=ModelsResponse)
 async def list_models(valid: bool = Depends(verify_ai_token)):
@@ -375,7 +349,6 @@ async def list_models(valid: bool = Depends(verify_ai_token)):
             ModelObject(id="youxiaojin-tts", created=int(time.time())),
         ]
     )
-
 
 @router.post("/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, valid: bool = Depends(verify_ai_token)):
@@ -408,7 +381,6 @@ async def chat_completions(request: ChatCompletionRequest, valid: bool = Depends
         )
     )
     return resp
-
 
 @router.post("/audio/speech")
 async def create_speech(request: SpeechRequest, valid: bool = Depends(verify_ai_token)):

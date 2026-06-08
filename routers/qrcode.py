@@ -7,10 +7,8 @@ from io import BytesIO
 
 router = APIRouter(prefix="/qrcode", tags=["二维码"])
 
-
 class QRCodeRequest(BaseModel):
     text: str
-
 
 def _generate_qrcode_base64(text: str) -> str:
     try:
@@ -30,11 +28,9 @@ def _generate_qrcode_base64(text: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"生成二维码失败: {str(e)}")
 
-
 @router.get("/{text:path}", response_class=PlainTextResponse)
 async def get_qrcode(text: str):
     return _generate_qrcode_base64(text)
-
 
 @router.post("/", response_class=PlainTextResponse)
 async def post_qrcode(request: QRCodeRequest):

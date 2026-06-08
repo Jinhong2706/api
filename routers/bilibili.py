@@ -1,3 +1,6 @@
+import time
+import hashlib
+import urllib.parse
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import httpx
@@ -11,20 +14,44 @@ BILIBILI_HEADERS = {
 
 API_BASE = "https://api.bilibili.com"
 
+_WBI_KEYS = None
+_WBI_KEYS_EXPIRE = 0
 
 class BvRequest(BaseModel):
     bvid: str
-
 
 class SearchRequest(BaseModel):
     keyword: str
     page: int = 1
     page_size: int = 20
 
-
 class AvidRequest(BaseModel):
     avid: int
 
+async def _get_wbi_keys() -> tuple[str, str]:
+    global _WBI_KEYS, _WBI_KEYS_EXPIRE
+    now = time.time()
+    if _WBI_KEYS and now < _WBI_KEYS_EXPIRE:
+        return _WBI_KEYS
+    async with httpx.AsyncClient(headers=BILIBILI_HEADERS, timeout=10) as client:
+        resp = await client.get(f"{API_BASE}/x/web-interface/nav")
+        data = resp.json()
+        if data.get("code") != 0:
+            raise HTTPException(502, "获取B站密钥失败")
+        wbi = data["data"]["wbi_img"]
+        img_key = wbi["img_url"].rsplit("/", 1)[1].split(".")[0]
+        sub_key = wbi["sub_url"].rsplit("/", 1)[1].split(".")[0]
+        _WBI_KEYS = (img_key, sub_key)
+        _WBI_KEYS_EXPIRE = now + 600
+        return _WBI_KEYS
+
+def _sign_wbi(params: dict, img_key: str, sub_key: str) -> dict:
+    mix_key = sub_key[:4] + img_key[:4]
+    params["wts"] = int(time.time())
+    keys = sorted(params.keys())
+    query = urllib.parse.urlencode({k: params[k] for k in keys})
+    params["w_rid"] = hashlib.md5((query + mix_key).encode()).hexdigest()
+    return params
 
 async def _get_info(client: httpx.AsyncClient, **params) -> dict:
     resp = await client.get(f"{API_BASE}/x/web-interface/view", params=params)
@@ -33,17 +60,14 @@ async def _get_info(client: httpx.AsyncClient, **params) -> dict:
         raise HTTPException(404, "视频不存在")
     return data["data"]
 
-
-async def _get_play_url(client: httpx.AsyncClient, params: dict, fnval: int = 4048) -> dict:
-    params["qn"] = 80
+async def _get_play_url(client: httpx.AsyncClient, params: dict, qn: int = 80, fnval: int = 4048) -> dict:
+    params["qn"] = qn
     params["fnval"] = fnval
     resp = await client.get(f"{API_BASE}/x/player/playurl", params=params)
     return resp.json()
 
-
 def _get_client() -> httpx.AsyncClient:
     return httpx.AsyncClient(headers=BILIBILI_HEADERS, timeout=30)
-
 
 @router.get("/hot")
 async def get_hot(ps: int = 50):
@@ -52,13 +76,11 @@ async def get_hot(ps: int = 50):
         resp = await client.get(f"{API_BASE}/x/web-interface/popular", params={"ps": ps})
         return resp.json()
 
-
 @router.get("/video/{bvid}")
 async def get_video(bvid: str):
     async with _get_client() as client:
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"bvid": bvid})
         return resp.json()
-
 
 @router.post("/video")
 async def post_video(request: BvRequest):
@@ -66,20 +88,17 @@ async def post_video(request: BvRequest):
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"bvid": request.bvid})
         return resp.json()
 
-
 @router.api_route("/video/download/{bvid}", methods=["GET", "POST"])
 async def get_video_download(bvid: str, qn: int = 80, fnval: int = 0):
     async with _get_client() as client:
         info = await _get_info(client, bvid=bvid)
-        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, fnval)
-
+        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.api_route("/video/download/1080/{bvid}", methods=["GET", "POST"])
 async def get_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
     async with _get_client() as client:
         info = await _get_info(client, bvid=bvid)
-        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, fnval)
-
+        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.get("/video/avid/{aid}")
 async def get_video_by_aid(aid: int):
@@ -87,38 +106,31 @@ async def get_video_by_aid(aid: int):
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"aid": aid})
         return resp.json()
 
-
 @router.post("/video/avid")
 async def post_video_by_aid(request: AvidRequest):
     async with _get_client() as client:
         resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"aid": request.avid})
         return resp.json()
 
-
 @router.api_route("/video/download/avid/{aid}", methods=["GET", "POST"])
 async def get_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
     async with _get_client() as client:
         info = await _get_info(client, aid=aid)
-        return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, fnval)
+        return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
+async def _search_bilibili(keyword: str, page: int, page_size: int):
+    page_size = min(page_size, 50)
+    params = {"search_type": "video", "keyword": keyword, "page": page, "page_size": page_size}
+    img_key, sub_key = await _get_wbi_keys()
+    params = _sign_wbi(params, img_key, sub_key)
+    async with _get_client() as client:
+        resp = await client.get(f"{API_BASE}/x/web-interface/wbi/search/type", params=params)
+        return resp.json()
 
 @router.get("/search/{keyword}")
 async def search_video(keyword: str, page: int = 1, page_size: int = 20):
-    page_size = min(page_size, 50)
-    async with _get_client() as client:
-        resp = await client.get(
-            f"{API_BASE}/x/web-interface/wbi/search/type",
-            params={"search_type": "video", "keyword": keyword, "page": page, "page_size": page_size}
-        )
-        return resp.json()
-
+    return await _search_bilibili(keyword, page, page_size)
 
 @router.post("/search")
 async def post_search_video(request: SearchRequest):
-    page_size = min(request.page_size, 50)
-    async with _get_client() as client:
-        resp = await client.get(
-            f"{API_BASE}/x/web-interface/wbi/search/type",
-            params={"search_type": "video", "keyword": request.keyword, "page": request.page, "page_size": page_size}
-        )
-        return resp.json()
+    return await _search_bilibili(request.keyword, request.page, request.page_size)
