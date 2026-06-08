@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+httpx
+qrcode
+pillow
+jinja2
+loguru
+pydantic
