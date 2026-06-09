@@ -1,5 +1,4 @@
 import os
-import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import Response
@@ -14,24 +13,13 @@ from routers.qrcode import router as qrcode_router
 from routers.ip import router as ip_router
 from routers.web import router as web_router
 from routers.youdaolittlep import router as youdaolittlep_router
-from routers.text2img.router import router as text2img_router, render, periodic_cleanup
 from utils import close_http_client
 
-cleanup_task = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global cleanup_task
-    cleanup_task = asyncio.create_task(periodic_cleanup())
     yield
-    if cleanup_task:
-        cleanup_task.cancel()
-        try:
-            await cleanup_task
-        except asyncio.CancelledError:
-            pass
     await close_http_client()
-    await render.terminate()
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
@@ -88,9 +76,8 @@ app.include_router(qrcode_router)
 app.include_router(ip_router)
 app.include_router(web_router)
 app.include_router(youdaolittlep_router)
-app.include_router(text2img_router)
 
-HELLO_RESPONSE = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
+HELLO_RESPONSE = "Hello World\nPowered by Jinhong270\nRunning on YoudaoDictionaryPen\n"
 
 @app.get("/")
 async def root():

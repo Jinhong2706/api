@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from utils import get_http_client
 import httpx
 
 router = APIRouter(prefix="/bilibili", tags=["Bilibili"])
@@ -22,122 +23,103 @@ class SearchRequest(BaseModel):
 class AvidRequest(BaseModel):
     avid: int
 
-async def _get_info(client: httpx.AsyncClient, **params) -> dict:
-    resp = await client.get(f"{API_BASE}/x/web-interface/view", params=params)
+async def _request(client: httpx.AsyncClient, url: str, params: dict = None) -> dict:
+    headers = BILIBILI_HEADERS.copy()
+    resp = await client.get(url, params=params, headers=headers)
     data = resp.json()
     if data.get("code") != 0:
-        raise HTTPException(404, "视频不存在")
+        raise HTTPException(status_code=404, detail=data.get("message", "B站API返回错误"))
     return data["data"]
 
-async def _get_play_url(client: httpx.AsyncClient, params: dict, qn: int = 80, fnval: int = 4048) -> dict:
-    params["qn"] = qn
-    params["fnval"] = fnval
-    resp = await client.get(f"{API_BASE}/x/player/playurl", params=params)
-    return resp.json()
+async def _get_video_info(client: httpx.AsyncClient, **params) -> dict:
+    return await _request(client, f"{API_BASE}/x/web-interface/view", params=params)
 
-def _get_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(headers=BILIBILI_HEADERS, timeout=30)
-
-
-# ---- 共用逻辑抽成私有方法，避免重复代码 ----
-
-async def _video_download(bvid: str, qn: int, fnval: int):
-    async with _get_client() as client:
-        info = await _get_info(client, bvid=bvid)
-        return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
-
-async def _video_download_avid(aid: int, qn: int, fnval: int):
-    async with _get_client() as client:
-        info = await _get_info(client, aid=aid)
-        return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
-
-
-# ---- 热点 ----
+async def _get_play_url(client: httpx.AsyncClient, params: dict, qn: int, fnval: int) -> dict:
+    params.update({"qn": qn, "fnval": fnval})
+    return await _request(client, f"{API_BASE}/x/player/playurl", params=params)
 
 @router.get("/hot")
 async def get_hot(ps: int = 50):
     ps = min(ps, 100)
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/popular", params={"ps": ps})
-        return resp.json()
-
-
-# ---- 视频信息 ----
+    client = await get_http_client()
+    return await _request(client, f"{API_BASE}/x/web-interface/popular", params={"ps": ps})
 
 @router.get("/video/{bvid}")
-async def get_video(bvid: str):
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"bvid": bvid})
-        return resp.json()
+async def get_video_by_bvid(bvid: str):
+    client = await get_http_client()
+    return await _get_video_info(client, bvid=bvid)
 
 @router.post("/video")
-async def post_video(request: BvRequest):
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"bvid": request.bvid})
-        return resp.json()
-
-
-# ---- 视频下载（BVID） ----
+async def post_video_by_bvid(request: BvRequest):
+    client = await get_http_client()
+    return await _get_video_info(client, bvid=request.bvid)
 
 @router.get("/video/download/{bvid}")
 async def get_video_download(bvid: str, qn: int = 80, fnval: int = 0):
-    return await _video_download(bvid, qn, fnval)
+    client = await get_http_client()
+    info = await _get_video_info(client, bvid=bvid)
+    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.post("/video/download/{bvid}")
 async def post_video_download(bvid: str, qn: int = 80, fnval: int = 0):
-    return await _video_download(bvid, qn, fnval)
-
-
-# ---- 视频下载 1080（BVID） ----
+    client = await get_http_client()
+    info = await _get_video_info(client, bvid=bvid)
+    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.get("/video/download/1080/{bvid}")
 async def get_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
-    return await _video_download(bvid, qn, fnval)
+    client = await get_http_client()
+    info = await _get_video_info(client, bvid=bvid)
+    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.post("/video/download/1080/{bvid}")
 async def post_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
-    return await _video_download(bvid, qn, fnval)
-
-
-# ---- 视频信息（AID） ----
+    client = await get_http_client()
+    info = await _get_video_info(client, bvid=bvid)
+    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.get("/video/avid/{aid}")
 async def get_video_by_aid(aid: int):
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"aid": aid})
-        return resp.json()
+    client = await get_http_client()
+    return await _get_video_info(client, aid=aid)
 
 @router.post("/video/avid")
 async def post_video_by_aid(request: AvidRequest):
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/view", params={"aid": request.avid})
-        return resp.json()
-
-
-# ---- 视频下载（AID） ----
+    client = await get_http_client()
+    return await _get_video_info(client, aid=request.avid)
 
 @router.get("/video/download/avid/{aid}")
 async def get_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
-    return await _video_download_avid(aid, qn, fnval)
+    client = await get_http_client()
+    info = await _get_video_info(client, aid=aid)
+    return await _get_play_url(client, {"avid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.post("/video/download/avid/{aid}")
 async def post_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
-    return await _video_download_avid(aid, qn, fnval)
-
-
-# ---- 搜索 ----
-
-async def _search_bilibili(keyword: str, page: int, page_size: int):
-    page_size = min(page_size, 50)
-    params = {"search_type": "video", "keyword": keyword, "page": page, "page_size": page_size}
-    async with _get_client() as client:
-        resp = await client.get(f"{API_BASE}/x/web-interface/wbi/search/type", params=params)
-        return resp.json()
+    client = await get_http_client()
+    info = await _get_video_info(client, aid=aid)
+    return await _get_play_url(client, {"avid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
 @router.get("/search/{keyword}")
 async def search_video(keyword: str, page: int = 1, page_size: int = 20):
-    return await _search_bilibili(keyword, page, page_size)
+    page_size = min(page_size, 50)
+    client = await get_http_client()
+    params = {
+        "search_type": "video",
+        "keyword": keyword,
+        "page": page,
+        "page_size": page_size
+    }
+    return await _request(client, f"{API_BASE}/x/web-interface/search/type", params=params)
 
 @router.post("/search")
 async def post_search_video(request: SearchRequest):
-    return await _search_bilibili(request.keyword, request.page, request.page_size)
+    page_size = min(request.page_size, 50)
+    client = await get_http_client()
+    params = {
+        "search_type": "video",
+        "keyword": request.keyword,
+        "page": request.page,
+        "page_size": page_size
+    }
+    return await _request(client, f"{API_BASE}/x/web-interface/search/type", params=params)

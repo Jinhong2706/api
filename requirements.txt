@@ -3,7 +3,5 @@ uvicorn
 httpx
 qrcode
 pillow
-jinja2
-playwright
 loguru
 pydantic
