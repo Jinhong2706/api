@@ -1,5 +1,4 @@
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import Response
 from fastapi.openapi.utils import get_openapi
@@ -11,17 +10,10 @@ from starlette.status import HTTP_403_FORBIDDEN
 from routers.bilibili import router as bilibili_router
 from routers.qrcode import router as qrcode_router
 from routers.ip import router as ip_router
-from routers.web import router as web_router
 from routers.youdaolittlep import router as youdaolittlep_router
-from utils import close_http_client
+from routers.text2img.router import router as text2img_router
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    yield
-    await close_http_client()
-
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 EXPECTED_TOKEN = os.getenv("OPENAPI_TOKEN")
 if not EXPECTED_TOKEN:
@@ -74,10 +66,10 @@ async def get_redoc_documentation(
 app.include_router(bilibili_router)
 app.include_router(qrcode_router)
 app.include_router(ip_router)
-app.include_router(web_router)
 app.include_router(youdaolittlep_router)
+app.include_router(text2img_router)
 
-HELLO_RESPONSE = "Hello World\nPowered by Jinhong270\nRunning on YoudaoDictionaryPen\n"
+HELLO_RESPONSE = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
 
 @app.get("/")
 async def root():
