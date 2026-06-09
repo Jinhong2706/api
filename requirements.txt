@@ -5,3 +5,6 @@ qrcode
 pillow
 loguru
 pydantic
+jinja2
+playwright
+typing_extensions
