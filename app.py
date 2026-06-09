@@ -1,85 +1,41 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import Response
-from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-from fastapi.security import APIKeyQuery
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.status import HTTP_403_FORBIDDEN
+from fastapi import FastAPI, Request
+from fastapi.responses import PlainTextResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from routers import ip, qrcode, bilibili, youdaolittlep
+from routers.text2img import router as text2img_router
 
-from routers.bilibili import router as bilibili_router
-from routers.qrcode import router as qrcode_router
-from routers.ip import router as ip_router
-from routers.youdaolittlep import router as youdaolittlep_router
-from routers.text2img.router import router as text2img_router
+OPENAPI_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-EXPECTED_TOKEN = os.getenv("OPENAPI_TOKEN")
-if not EXPECTED_TOKEN:
-    raise RuntimeError("OPENAPI_TOKEN environment variable not set")
+class TokenAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path in ("/openapi.json", "/docs", "/redoc"):
+            token = request.query_params.get("token")
+            if not OPENAPI_TOKEN or token != OPENAPI_TOKEN:
+                return Response(content="Unauthorized", status_code=401, media_type="text/plain")
+        response = await call_next(request)
+        return response
 
-api_key_query = APIKeyQuery(name="token", auto_error=False)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI()
+app.add_middleware(TokenAuthMiddleware)
 
-async def verify_token(token: str = Depends(api_key_query)):
-    if token != EXPECTED_TOKEN:
-        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Invalid or missing token")
+app.include_router(ip.router)
+app.include_router(qrcode.router)
+app.include_router(bilibili.router)
+app.include_router(youdaolittlep.router)
+app.include_router(text2img_router.router)
 
-@app.get("/openapi.json", include_in_schema=False)
-async def get_openapi_json(valid: bool = Depends(verify_token)):
-    return get_openapi(
-        title=app.title,
-        version=app.version,
-        openapi_version=app.openapi_version,
-        description=app.description,
-        routes=app.routes,
-    )
+HELLO_TEXT = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
 
-@app.get("/docs", include_in_schema=False)
-async def get_documentation(
-    token: str = Depends(api_key_query),
-    valid: bool = Depends(verify_token)
-):
-    return get_swagger_ui_html(
-        openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - Swagger UI"
-    )
 
-@app.get("/redoc", include_in_schema=False)
-async def get_redoc_documentation(
-    token: str = Depends(api_key_query),
-    valid: bool = Depends(verify_token)
-):
-    return get_redoc_html(
-        openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - ReDoc"
-    )
-
-app.include_router(bilibili_router)
-app.include_router(qrcode_router)
-app.include_router(ip_router)
-app.include_router(youdaolittlep_router)
-app.include_router(text2img_router)
-
-HELLO_RESPONSE = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
-
-@app.get("/")
+@app.get("/", response_class=PlainTextResponse)
 async def root():
-    return Response(content=HELLO_RESPONSE, media_type="text/plain")
+    return HELLO_TEXT
 
-@app.get("/status")
-async def get_status():
-    return Response(content=HELLO_RESPONSE, media_type="text/plain")
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 7860))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/status", response_class=PlainTextResponse)
+async def status():
+    return HELLO_TEXT
