@@ -20,8 +20,14 @@ class SearchRequest(BaseModel):
     page: int = 1
     page_size: int = 20
 
-class AvidRequest(BaseModel):
-    avid: int
+class AidRequest(BaseModel):
+    aid: int
+
+class DownloadBvRequest(BaseModel):
+    bvid: str
+
+class DownloadAidRequest(BaseModel):
+    aid: int
 
 async def _request(client: httpx.AsyncClient, url: str, params: dict = None) -> dict:
     headers = BILIBILI_HEADERS.copy()
@@ -60,11 +66,11 @@ async def get_video_download(bvid: str, qn: int = 80, fnval: int = 0):
     info = await _get_video_info(client, bvid=bvid)
     return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
-@router.post("/video/download/{bvid}")
-async def post_video_download(bvid: str, qn: int = 80, fnval: int = 0):
+@router.post("/video/download")
+async def post_video_download(request: DownloadBvRequest):
     client = await get_http_client()
-    info = await _get_video_info(client, bvid=bvid)
-    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    info = await _get_video_info(client, bvid=request.bvid)
+    return await _get_play_url(client, {"bvid": request.bvid, "cid": info["cid"]}, qn=80, fnval=0)
 
 @router.get("/video/download/1080/{bvid}")
 async def get_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
@@ -72,33 +78,33 @@ async def get_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
     info = await _get_video_info(client, bvid=bvid)
     return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
-@router.post("/video/download/1080/{bvid}")
-async def post_video_download_1080(bvid: str, qn: int = 80, fnval: int = 4048):
+@router.post("/video/download/1080")
+async def post_video_download_1080(request: DownloadBvRequest):
     client = await get_http_client()
-    info = await _get_video_info(client, bvid=bvid)
-    return await _get_play_url(client, {"bvid": bvid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    info = await _get_video_info(client, bvid=request.bvid)
+    return await _get_play_url(client, {"bvid": request.bvid, "cid": info["cid"]}, qn=80, fnval=4048)
 
-@router.get("/video/avid/{aid}")
+@router.get("/video/aid/{aid}")
 async def get_video_by_aid(aid: int):
     client = await get_http_client()
     return await _get_video_info(client, aid=aid)
 
-@router.post("/video/avid")
-async def post_video_by_aid(request: AvidRequest):
+@router.post("/video/aid")
+async def post_video_by_aid(request: AidRequest):
     client = await get_http_client()
-    return await _get_video_info(client, aid=request.avid)
+    return await _get_video_info(client, aid=request.aid)
 
-@router.get("/video/download/avid/{aid}")
+@router.get("/video/download/aid/{aid}")
 async def get_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
     client = await get_http_client()
     info = await _get_video_info(client, aid=aid)
-    return await _get_play_url(client, {"avid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    return await _get_play_url(client, {"aid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
 
-@router.post("/video/download/avid/{aid}")
-async def post_video_download_by_aid(aid: int, qn: int = 80, fnval: int = 4048):
+@router.post("/video/download/aid")
+async def post_video_download_by_aid(request: DownloadAidRequest):
     client = await get_http_client()
-    info = await _get_video_info(client, aid=aid)
-    return await _get_play_url(client, {"avid": aid, "cid": info["cid"]}, qn=qn, fnval=fnval)
+    info = await _get_video_info(client, aid=request.aid)
+    return await _get_play_url(client, {"aid": request.aid, "cid": info["cid"]}, qn=80, fnval=4048)
 
 @router.get("/search/{keyword}")
 async def search_video(keyword: str, page: int = 1, page_size: int = 20):
