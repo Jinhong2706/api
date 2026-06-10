@@ -1,8 +1,7 @@
 import os
 from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
 from routers import ip, qrcode, bilibili, youdaolittlep
 from routers.text2img import router as text2img_router
 
@@ -14,7 +13,7 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in ("/openapi.json", "/docs", "/redoc"):
             token = request.query_params.get("token")
             if not OPENAPI_TOKEN or token != OPENAPI_TOKEN:
-                return Response(content="Unauthorized", status_code=401, media_type="text/plain")
+                return JSONResponse(content={"detail": "Unauthorized"}, status_code=401)
         response = await call_next(request)
         return response
 
