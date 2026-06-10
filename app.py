@@ -19,7 +19,9 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app = FastAPI()
+app = FastAPI(
+    openapi_url=f"/openapi.json?token={OPENAPI_TOKEN}" if OPENAPI_TOKEN else "/openapi.json"
+)
 app.add_middleware(TokenAuthMiddleware)
 
 app.include_router(ip.router)
