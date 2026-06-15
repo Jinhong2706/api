@@ -1,0 +1,24 @@
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(4, 70px);
+        grid-template-rows: repeat(4, 70px);
+        gap: 8px;
+    }
+    .cell {
+        font-size: 24px;
+    }
+    .btn {
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+    }
+    .modal-content {
+        padding: 20px 25px;
+        font-size: 22px;
+        min-width: 260px;
+    }
+    .modal-btn {
+        padding: 8px 18px;
+        font-size: 16px;
+    }
+}
