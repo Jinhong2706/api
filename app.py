@@ -68,8 +68,10 @@ async def root():
 async def status():
     return HELLO_TEXT
 
-app.mount("/snake", StaticFiles(directory="static/snake", html=True), name="snake")
-app.mount("/2048", StaticFiles(directory="static/2048", html=True), name="2048")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/snake"), html=True), name="snake")
+app.mount("/2048", StaticFiles(directory=os.path.join(BASE_DIR, "static/2048"), html=True), name="2048")
 
 if __name__ == "__main__":
     import uvicorn
