@@ -1,0 +1,71 @@
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.score-box {
+    background: #bbada0;
+    color: white;
+    padding: 10px 30px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.dpad {
+    display: grid;
+    grid-template-areas:
+        ". up ."
+        "left . right"
+        ". down .";
+    gap: 12px;
+}
+
+.btn {
+    width: 70px;
+    height: 70px;
+    border: none;
+    border-radius: 14px;
+    background: #8f7a66;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    user-select: none;
+}
+
+.btn:active {
+    transform: scale(0.92);
+    background: #9e8b77;
+}
+
+.btn-up    { grid-area: up; }
+.btn-down  { grid-area: down; }
+.btn-left  { grid-area: left; }
+.btn-right { grid-area: right; }
+
+.reset-btn {
+    background: #8f7a66;
+    color: white;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.reset-btn:active {
+    transform: scale(0.95);
+    background: #9e8b77;
+}

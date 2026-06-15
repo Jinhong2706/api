@@ -1,0 +1,56 @@
+.board-section {
+    background: #bbada0;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 12px;
+}
+
+.cell {
+    background: #cdc1b4;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 38px;
+    font-weight: bold;
+    color: #776e65;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.cell[data-value="2"]    { background: #eee4da; }
+.cell[data-value="4"]    { background: #ede0c8; }
+.cell[data-value="8"]    { background: #f2b179; color: #f9f6f2; }
+.cell[data-value="16"]   { background: #f59563; color: #f9f6f2; }
+.cell[data-value="32"]   { background: #f67c5f; color: #f9f6f2; }
+.cell[data-value="64"]   { background: #f65e3b; color: #f9f6f2; }
+.cell[data-value="128"]  { background: #edcf72; color: #f9f6f2; font-size: 32px; }
+.cell[data-value="256"]  { background: #edcc61; color: #f9f6f2; font-size: 32px; }
+.cell[data-value="512"]  { background: #edc850; color: #f9f6f2; font-size: 32px; }
+.cell[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 28px; }
+.cell[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 28px; }
+.cell[data-value="4096"] { background: #3c3a32; color: #f9f6f2; font-size: 28px; }
+.cell[data-value="8192"] { background: #2c2a24; color: #f9f6f2; font-size: 26px; }
+.cell[data-value="16384"] { background: #1e1c18; color: #f9f6f2; font-size: 24px; }
+
+.cell.animate {
+    transform: scale(1.08);
+    transition: transform 0.08s ease;
+}
+
+.cell.pop-in {
+    animation: popIn 0.15s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}

@@ -4,6 +4,7 @@ from fastapi.responses import PlainTextResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.security import APIKeyQuery
+from fastapi.staticfiles import StaticFiles
 from routers import ip, qrcode, bilibili, youdaolittlep
 
 EXPECTED_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
@@ -64,6 +65,9 @@ async def root():
 @app.get("/status", response_class=PlainTextResponse)
 async def status():
     return HELLO_TEXT
+
+app.mount("/snake", StaticFiles(directory="static/snake", html=True), name="snake")
+app.mount("/2048", StaticFiles(directory="static/2048", html=True), name="2048")
 
 if __name__ == "__main__":
     import uvicorn

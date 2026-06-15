@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048(Made by Jinhong270)</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/controls.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="board-section">
+            <div class="grid" id="grid"></div>
+        </div>
+        <div class="controls">
+            <div class="score-box">历史最佳 <span id="maxValue">0</span></div>
+            <div class="dpad">
+                <button class="btn btn-up" data-dir="up">▲</button>
+                <button class="btn btn-left" data-dir="left">◀</button>
+                <button class="btn btn-right" data-dir="right">▶</button>
+                <button class="btn btn-down" data-dir="down">▼</button>
+            </div>
+            <button class="reset-btn" id="resetBtn">新游戏</button>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <p>恭喜！你达到了2048！</p>
+            <div class="modal-buttons">
+                <button id="continueBtn" class="modal-btn">继续游戏</button>
+                <button id="newGameFromWinBtn" class="modal-btn">新游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <p>游戏结束！没有可移动的格子了。</p>
+            <div class="modal-buttons">
+                <button id="newGameFromOverBtn" class="modal-btn">新游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/logic.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
