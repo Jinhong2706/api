@@ -4,8 +4,8 @@ from fastapi.security import APIKeyQuery
 from typing import List, Optional
 import uuid
 from pydantic import BaseModel
-from routers.Web-Monitor.models import Monitor
-from routers.Web-Monitor.manager import get_global_manager, MonitorManager
+from routers.Monitor.models import Monitor
+from routers.Monitor.manager import get_global_manager, MonitorManager
 
 EXPECTED_TOKEN = os.environ.get("WEB_MONITOR_TOKEN", "")
 if not EXPECTED_TOKEN:
@@ -17,12 +17,13 @@ async def verify_monitor_token(token: str = Depends(api_key_query)):
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized")
     if token != EXPECTED_TOKEN:
-        raise HTTPException(status_code=403, detail="Invalid token")
+        raise HTTPException(status_code=403, detail=f"Authentication Fails, Your token: {token} is invalid")
 
 router = APIRouter(
     prefix="/monitors",
-    tags=["monitors"],
-    dependencies=[Depends(verify_monitor_token)]
+    tags=["Web Monitors"],
+    dependencies=[Depends(verify_monitor_token)],
+    redirect_slashes=False
 )
 
 def get_manager() -> MonitorManager:
@@ -34,13 +35,6 @@ class MonitorCreate(BaseModel):
     data: Optional[str] = None
     frequency: int = 30
 
-class MonitorUpdate(BaseModel):
-    method: Optional[str] = None
-    url: Optional[str] = None
-    data: Optional[str] = None
-    frequency: Optional[int] = None
-    enabled: Optional[bool] = None
-
 class MonitorOut(BaseModel):
     id: str
     method: str
@@ -51,11 +45,11 @@ class MonitorOut(BaseModel):
     latest_result: Optional[dict]
     history: List[dict]
 
-@router.get("/", response_model=List[MonitorOut])
+@router.get("")
 async def list_monitors(manager: MonitorManager = Depends(get_manager)):
     return manager.get_monitors()
 
-@router.post("/", response_model=MonitorOut)
+@router.post("")
 async def create_monitor(mon: MonitorCreate, manager: MonitorManager = Depends(get_manager)):
     mid = uuid.uuid4().hex
     new_mon = Monitor(mid, mon.method, mon.url, mon.data, mon.frequency)
@@ -64,29 +58,6 @@ async def create_monitor(mon: MonitorCreate, manager: MonitorManager = Depends(g
 
 @router.delete("/{monitor_id}")
 async def delete_monitor(monitor_id: str, manager: MonitorManager = Depends(get_manager)):
-    manager.remove_monitor(monitor_id)
+    if not manager.remove_monitor(monitor_id):
+        raise HTTPException(status_code=404, detail="Monitor not found")
     return {"status": "deleted"}
-
-@router.patch("/{monitor_id}")
-async def update_monitor(monitor_id: str, update: MonitorUpdate, manager: MonitorManager = Depends(get_manager)):
-    manager.update_monitor(
-        monitor_id,
-        update.method,
-        update.url,
-        update.data,
-        update.frequency,
-        update.enabled
-    )
-    return {"status": "updated"}
-
-@router.post("/{monitor_id}/toggle")
-async def toggle_monitor(monitor_id: str, manager: MonitorManager = Depends(get_manager)):
-    manager.toggle_enabled(monitor_id)
-    return {"status": "toggled"}
-
-@router.get("/{monitor_id}/status")
-async def get_status(monitor_id: str, manager: MonitorManager = Depends(get_manager)):
-    mon = manager.monitors.get(monitor_id)
-    if not mon:
-        raise HTTPException(404, "Monitor not found")
-    return mon.latest_result or {}

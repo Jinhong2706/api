@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import PlainTextResponse
 from fastapi.openapi.utils import get_openapi
@@ -21,16 +22,14 @@ async def verify_api_token(token: str = Depends(api_key_query)):
     if token != EXPECTED_TOKEN:
         raise HTTPException(status_code=403, detail=f"Authentication Fails, Your token: {token} is invalid")
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-app.title = "Web-Monitor"
-
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     get_global_manager()
-
-@app.on_event("shutdown")
-async def shutdown():
+    yield
     shutdown_global_manager()
+
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app.title = "Web-Monitor"
 
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi_json(valid: bool = Depends(verify_api_token)):

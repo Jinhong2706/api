@@ -6,11 +6,11 @@ import logging
 import requests
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-from routers.Web-Monitor.models import Monitor
+from routers.Monitor.models import Monitor
 
 logger = logging.getLogger(__name__)
 
-DATA_FILE = "/data/monitors.json"
+DATA_FILE = os.environ.get("MONITOR_DATA_FILE", "monitors.json")
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
@@ -34,7 +34,7 @@ class MonitorManager:
 
     def load_saved_monitors(self):
         if not os.path.exists(DATA_FILE):
-            logger.info("Data file not found, will create new")
+            logger.info(f"Data file {DATA_FILE} not found, will create new")
             return
         try:
             with open(DATA_FILE, "r") as f:
@@ -52,10 +52,9 @@ class MonitorManager:
                     enabled=item.get("enabled", True)
                 )
                 self.monitors[mid] = mon
-            logger.info(f"Loaded {len(self.monitors)} monitors")
+            logger.info(f"Loaded {len(self.monitors)} monitors from {DATA_FILE}")
         except Exception as e:
             logger.error(f"Load failed: {e}")
-            self.save_monitors()
 
     def save_monitors(self):
         try:
@@ -82,11 +81,15 @@ class MonitorManager:
         logger.info(f"Added monitor: {monitor.url}")
 
     def remove_monitor(self, mid):
+        deleted = False
         with self._lock:
             if mid in self.monitors:
                 del self.monitors[mid]
-        self.save_monitors()
-        logger.info(f"Removed monitor: {mid}")
+                deleted = True
+        if deleted:
+            self.save_monitors()
+            logger.info(f"Removed monitor: {mid}")
+        return deleted
 
     def update_monitor(self, mid, method, url, data, frequency, enabled=None):
         with self._lock:
@@ -141,11 +144,12 @@ class MonitorManager:
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             }
         with self._lock:
-            mon.last_run = time.time()
-            mon.latest_result = result
-            mon.history.append(result)
-            if len(mon.history) > 10:
-                mon.history.pop(0)
+            is_failure = result.get("status_code") != 200 or result.get("error") is not None
+            if is_failure:
+                mon.latest_result = result
+                mon.history = [result]
+            else:
+                mon.latest_result = None
 
     def _run_loop(self):
         while self._running:
@@ -154,6 +158,7 @@ class MonitorManager:
                 monitors = list(self.monitors.values())
             for mon in monitors:
                 if mon.enabled and (now - mon.last_run >= mon.frequency):
+                    mon.last_run = now
                     self._executor.submit(self._execute, mon)
             time.sleep(1)
 
