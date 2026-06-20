@@ -3,8 +3,9 @@ uvicorn
 httpx
 qrcode
 pillow
-loguru
 pydantic
+requests
+loguru
 jinja2
 playwright
 typing_extensions
