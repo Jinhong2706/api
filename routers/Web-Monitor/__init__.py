@@ -1,11 +1,29 @@
+import os
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import APIKeyQuery
 from typing import List, Optional
 import uuid
 from pydantic import BaseModel
 from routers.Web-Monitor.models import Monitor
 from routers.Web-Monitor.manager import get_global_manager, MonitorManager
 
-router = APIRouter(prefix="/monitors", tags=["monitors"])
+EXPECTED_TOKEN = os.environ.get("WEB_MONITOR_TOKEN", "")
+if not EXPECTED_TOKEN:
+    raise RuntimeError("WEB_MONITOR_TOKEN environment variable not set")
+
+api_key_query = APIKeyQuery(name="token", auto_error=False)
+
+async def verify_monitor_token(token: str = Depends(api_key_query)):
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if token != EXPECTED_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid token")
+
+router = APIRouter(
+    prefix="/monitors",
+    tags=["monitors"],
+    dependencies=[Depends(verify_monitor_token)]
+)
 
 def get_manager() -> MonitorManager:
     return get_global_manager()
