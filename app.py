@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import PlainTextResponse
 from fastapi.openapi.utils import get_openapi
@@ -7,6 +8,8 @@ from fastapi.security import APIKeyQuery
 from fastapi.staticfiles import StaticFiles
 from routers import ip, qrcode, bilibili, youdaolittlep
 from routers.text2img import router as text2img_router
+from routers.Monitor import router as monitor_router
+from routers.Monitor.manager import get_global_manager, shutdown_global_manager
 
 EXPECTED_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
 if not EXPECTED_TOKEN:
@@ -20,7 +23,14 @@ async def verify_api_token(token: str = Depends(api_key_query)):
     if token != EXPECTED_TOKEN:
         raise HTTPException(status_code=403, detail=f"Authentication Fails, Your token: {token} is invalid")
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    get_global_manager()
+    yield
+    shutdown_global_manager()
+
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app.title = "Web-Monitor"
 
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi_json(valid: bool = Depends(verify_api_token)):
@@ -57,6 +67,7 @@ app.include_router(qrcode.router)
 app.include_router(bilibili.router)
 app.include_router(youdaolittlep.router)
 app.include_router(text2img_router.router)
+app.include_router(monitor_router)
 
 HELLO_TEXT = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
 
