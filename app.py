@@ -6,6 +6,8 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.security import APIKeyQuery
 from fastapi.staticfiles import StaticFiles
 from routers import ip, qrcode, bilibili, youdaolittlep
+from routers.Web-Monitor import router as monitor_router
+from routers.Web-Monitor.manager import get_global_manager, shutdown_global_manager
 
 EXPECTED_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
 if not EXPECTED_TOKEN:
@@ -20,6 +22,15 @@ async def verify_api_token(token: str = Depends(api_key_query)):
         raise HTTPException(status_code=403, detail=f"Authentication Fails, Your token: {token} is invalid")
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app.title = "Web-Monitor"
+
+@app.on_event("startup")
+async def startup():
+    get_global_manager()
+
+@app.on_event("shutdown")
+async def shutdown():
+    shutdown_global_manager()
 
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi_json(valid: bool = Depends(verify_api_token)):
@@ -55,6 +66,7 @@ app.include_router(ip.router)
 app.include_router(qrcode.router)
 app.include_router(bilibili.router)
 app.include_router(youdaolittlep.router)
+app.include_router(monitor_router)
 
 HELLO_TEXT = "Hello World\nPowered by Jinhong270\nRunning on YoudaoDictionaryPen\n"
 
