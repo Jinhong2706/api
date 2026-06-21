@@ -1,5 +1,5 @@
 ---
-title: api
+title: API
 emoji: 🐨
 colorFrom: gray
 colorTo: gray
