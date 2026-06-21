@@ -7,9 +7,9 @@ from pydantic import BaseModel
 from routers.Monitor.models import Monitor
 from routers.Monitor.manager import get_global_manager, MonitorManager
 
-EXPECTED_TOKEN = os.environ.get("WEB_MONITOR_TOKEN", "")
+EXPECTED_TOKEN = os.environ.get("WEB_MONITORS_TOKEN", "")
 if not EXPECTED_TOKEN:
-    raise RuntimeError("WEB_MONITOR_TOKEN environment variable not set")
+    raise RuntimeError("WEB_MONITORS_TOKEN environment variable not set")
 
 router = APIRouter(
     prefix="/monitors",

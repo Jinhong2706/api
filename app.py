@@ -10,9 +10,9 @@ from routers import ip, qrcode, bilibili, youdaolittlep
 from routers.Monitor import router as monitor_router
 from routers.Monitor.manager import get_global_manager, shutdown_global_manager
 
-EXPECTED_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
+EXPECTED_TOKEN = os.environ.get("FASTAPI_DOCS_TOKEN", "")
 if not EXPECTED_TOKEN:
-    raise RuntimeError("Environment variable OPENAPI_TOKEN is not set. Startup aborted.")
+    raise RuntimeError("Environment variable FASTAPI_DOCS_TOKEN is not set. Startup aborted.")
 
 api_key_query = APIKeyQuery(name="token", auto_error=False)
 
