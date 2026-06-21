@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     shutdown_global_manager()
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
-app.title = "Web-Monitor"
+app.title = "Docs"
 
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi_json(valid: bool = Depends(verify_api_token)):
@@ -49,7 +49,7 @@ async def swagger_ui(
 ):
     return get_swagger_ui_html(
         openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - Swagger UI"
+        title="Docs"
     )
 
 @app.get("/redoc", include_in_schema=False)
@@ -59,7 +59,7 @@ async def redoc_ui(
 ):
     return get_redoc_html(
         openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - ReDoc"
+        title="Redoc"
     )
 
 app.include_router(ip.router)
