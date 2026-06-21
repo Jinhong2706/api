@@ -131,7 +131,6 @@ class MonitorManager:
                 "status_code": resp.status_code,
                 "response_time": round(elapsed, 3),
                 "error": None,
-                "response_preview": resp.text[:500] if resp.text else "",
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             }
         except Exception as e:
@@ -140,16 +139,11 @@ class MonitorManager:
                 "status_code": None,
                 "response_time": round(elapsed, 3),
                 "error": str(e),
-                "response_preview": None,
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             }
+
         with self._lock:
-            is_failure = result.get("status_code") != 200 or result.get("error") is not None
-            if is_failure:
-                mon.latest_result = result
-                mon.history = [result]
-            else:
-                mon.latest_result = None
+            mon.latest_result = result
 
     def _run_loop(self):
         while self._running:

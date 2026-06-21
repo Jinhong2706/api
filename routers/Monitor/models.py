@@ -8,4 +8,3 @@ class Monitor:
         self.enabled = enabled
         self.last_run = 0
         self.latest_result = None
-        self.history = []
