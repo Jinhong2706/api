@@ -10,7 +10,7 @@ from routers.Monitor.models import Monitor
 
 logger = logging.getLogger(__name__)
 
-DATA_FILE = os.environ.get("MONITOR_DATA_FILE", "/data/monitors.json")
+DATA_FILE = os.environ.get("MONITORS_DATA_FILE", "/data/monitors.json")
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 }
