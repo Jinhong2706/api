@@ -22,7 +22,7 @@ def get_manager() -> MonitorManager:
 
 async def get_token(authorization: str = Header(None)):
     if not authorization:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="Authentication Fails")
     token = authorization
     if authorization.startswith("Bearer "):
         token = authorization[7:]
