@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from pydantic import BaseModel
 import qrcode
 import base64
@@ -10,28 +10,51 @@ router = APIRouter(prefix="/qrcode", tags=["二维码"])
 class QRCodeRequest(BaseModel):
     text: str
 
-def _generate_qrcode_base64(text: str) -> str:
+def _generate_qrcode_image(text: str) -> BytesIO:
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(text)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+@router.get("/base64/{text:path}", response_class=PlainTextResponse)
+async def get_qrcode_base64(text: str):
     try:
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(text)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        buf = _generate_qrcode_image(text)
+        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
         return f"data:image/png;base64,{img_base64}"
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"生成二维码失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{text:path}", response_class=PlainTextResponse)
-async def get_qrcode(text: str):
-    return _generate_qrcode_base64(text)
+@router.post("/base64", response_class=PlainTextResponse)
+async def post_qrcode_base64(request: QRCodeRequest):
+    try:
+        buf = _generate_qrcode_image(request.text)
+        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+        return f"data:image/png;base64,{img_base64}"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/", response_class=PlainTextResponse)
-async def post_qrcode(request: QRCodeRequest):
-    return _generate_qrcode_base64(request.text)
+@router.get("/{text:path}")
+async def get_qrcode_image(text: str):
+    try:
+        buf = _generate_qrcode_image(text)
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/")
+async def post_qrcode_image(request: QRCodeRequest):
+    try:
+        buf = _generate_qrcode_image(request.text)
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
