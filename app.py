@@ -7,8 +7,7 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.security import APIKeyQuery
 from fastapi.staticfiles import StaticFiles
 from routers import ip, qrcode, bilibili, youdaolittlep
-from routers.Monitor import router as monitor_router
-from routers.Monitor.manager import get_global_manager, shutdown_global_manager
+from routers.monitors import router as monitor_router, get_global_manager, shutdown_global_manager
 
 EXPECTED_TOKEN = os.environ.get("FASTAPI_DOCS_TOKEN", "")
 if not EXPECTED_TOKEN:
