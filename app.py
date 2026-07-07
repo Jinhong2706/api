@@ -1,7 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, FileResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.security import APIKeyQuery
@@ -12,6 +12,8 @@ from routers.monitors import router as monitor_router, get_global_manager, shutd
 EXPECTED_TOKEN = os.environ.get("FASTAPI_DOCS_TOKEN", "")
 if not EXPECTED_TOKEN:
     raise RuntimeError("Environment variable FASTAPI_DOCS_TOKEN is not set. Startup aborted.")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 api_key_query = APIKeyQuery(name="token", auto_error=False)
 
@@ -76,7 +78,9 @@ async def root():
 async def status():
     return HELLO_TEXT
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return FileResponse(os.path.join(BASE_DIR, "robots.txt"))
 
 app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/snake"), html=True), name="snake")
 app.mount("/2048", StaticFiles(directory=os.path.join(BASE_DIR, "static/2048"), html=True), name="2048")
