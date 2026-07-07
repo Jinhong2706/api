@@ -3,31 +3,6 @@ import httpx
 
 router = APIRouter(prefix="/ip", tags=["IP"])
 
-PRIVATE_RANGES = [
-    ("10", None),
-    ("172", 16, 31),
-    ("192", 168),
-]
-
-def _is_private_ip(ip: str) -> bool:
-    if ip in ("unknown", "0.0.0.0", "127.0.0.1", "::1"):
-        return True
-    parts = ip.split(".")
-    if len(parts) != 4:
-        return False
-    first = int(parts[0])
-    if first == 10:
-        return True
-    if first == 172 and len(parts) > 1:
-        second = int(parts[1])
-        if 16 <= second <= 31:
-            return True
-    if first == 192 and len(parts) > 1 and int(parts[1]) == 168:
-        return True
-    return False
-
-LOCATION_FIELDS = "status,message,country,regionName,city,lat,lon"
-
 @router.get("/")
 async def get_client_ip(request: Request):
     forwarded = request.headers.get("X-Forwarded-For")
@@ -38,19 +13,11 @@ async def get_client_ip(request: Request):
 
     result = {"ip": client_ip}
 
-    if client_ip != "unknown" and not _is_private_ip(client_ip):
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                f"http://ip-api.com/json/{client_ip}",
-                params={"fields": LOCATION_FIELDS}
-            )
-            data = resp.json()
-            if data.get("status") == "success":
-                result["location"] = {
-                    "country": data.get("country"),
-                    "region": data.get("regionName"),
-                    "city": data.get("city"),
-                    "latitude": data.get("lat"),
-                    "longitude": data.get("lon")
-                }
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f"http://ip-api.com/json/{client_ip}")
+        data = resp.json()
+        data.pop("query", None)
+        data.pop("status", None)
+        result.update(data)
+
     return result
