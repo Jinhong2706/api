@@ -50,7 +50,10 @@ class Text2ImgRender:
                     await self.browser.close()
                 except Exception:
                     pass
-            self.browser = await self.playwright.chromium.launch(headless=True)
+            self.browser = await self.playwright.chromium.launch(
+                headless=True,
+                args=['--no-sandbox', '--disable-dev-shm-usage']
+            )
         if level not in self.contexts:
             scale_factor = self.SCALE_FACTOR_MAP.get(level, 1.0)
             self.contexts[level] = await self.browser.new_context(device_scale_factor=scale_factor)

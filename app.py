@@ -52,7 +52,7 @@ app.include_router(ip.router)
 app.include_router(qrcode.router)
 app.include_router(bilibili.router)
 app.include_router(youdaolittlep.router)
-app.include_router(text2img_router.router)
+app.include_router(text2img_router)
 app.include_router(monitor_router)
 
 HELLO_TEXT = "Hello World\nPowered by Jinhong270\nRunning on Hugging Face\n"
