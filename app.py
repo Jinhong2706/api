@@ -17,6 +17,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 api_key_query = APIKeyQuery(name="token", auto_error=False)
 
+def load_api_info() -> str:
+    with open(os.path.join(BASE_DIR, "info.txt"), "r", encoding="utf-8") as f:
+        return f.read()
+
 async def verify_api_token(token: str = Depends(api_key_query)):
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -68,7 +72,7 @@ app.include_router(bilibili.router)
 app.include_router(youdaolittlep.router)
 app.include_router(monitor_router)
 
-HELLO_TEXT = "Hello World\nPowered by Jinhong270\nRunning on YoudaoDictionaryPen\n"
+HELLO_TEXT = load_api_info()
 
 @app.get("/", response_class=PlainTextResponse)
 async def root():
