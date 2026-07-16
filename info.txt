@@ -1,0 +1,476 @@
+Hello World
+Powered by Jinhong270
+{
+  "status": "running",
+  "endpoints": [
+    {
+      "path": "/",
+      "method": "GET",
+      "description": "Root endpoint - returns API information"
+    },
+    {
+      "path": "/status",
+      "method": "GET",
+      "description": "API status endpoint"
+    },
+    {
+      "path": "/ip/",
+      "method": "GET",
+      "description": "Get client IP address and geo-location information",
+      "params": []
+    },
+    {
+      "path": "/qrcode",
+      "method": "GET",
+      "description": "Generate QR code from text",
+      "params": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "Text to encode in QR code"
+        }
+      ]
+    },
+    {
+      "path": "/qrcode",
+      "method": "POST",
+      "description": "Generate QR code from text (POST)",
+      "params": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "Text to encode in QR code"
+        }
+      ]
+    },
+    {
+      "path": "/qrcode/base64",
+      "method": "GET",
+      "description": "Generate QR code and return as base64 data URI",
+      "params": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "Text to encode in QR code"
+        }
+      ]
+    },
+    {
+      "path": "/qrcode/base64",
+      "method": "POST",
+      "description": "Generate QR code and return as base64 data URI (POST)",
+      "params": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "Text to encode in QR code"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/hot",
+      "method": "GET",
+      "description": "Get trending videos from Bilibili",
+      "params": [
+        {
+          "name": "ps",
+          "type": "integer",
+          "required": false,
+          "default": 50,
+          "description": "Number of results (max 100)"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/{bvid}",
+      "method": "GET",
+      "description": "Get video info by BVID",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video",
+      "method": "POST",
+      "description": "Get video info by BVID (POST)",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/{aid}",
+      "method": "GET",
+      "description": "Get video info by AID",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/aid",
+      "method": "POST",
+      "description": "Get video info by AID (POST)",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/{bvid}",
+      "method": "GET",
+      "description": "Get video download URL by BVID",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download",
+      "method": "POST",
+      "description": "Get video download URL by BVID (POST)",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/1080/{bvid}",
+      "method": "GET",
+      "description": "Get 1080P video download URL by BVID",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/1080",
+      "method": "POST",
+      "description": "Get 1080P video download URL by BVID (POST)",
+      "params": [
+        {
+          "name": "bvid",
+          "type": "string",
+          "required": true,
+          "description": "Bilibili video BVID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/aid/{aid}",
+      "method": "GET",
+      "description": "Get video download URL by AID",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/aid",
+      "method": "POST",
+      "description": "Get video download URL by AID (POST)",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/aid/1080/{aid}",
+      "method": "GET",
+      "description": "Get 1080P video download URL by AID",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/video/download/aid/1080",
+      "method": "POST",
+      "description": "Get 1080P video download URL by AID (POST)",
+      "params": [
+        {
+          "name": "aid",
+          "type": "integer",
+          "required": true,
+          "description": "Bilibili video AID"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/search/{keyword}",
+      "method": "GET",
+      "description": "Search videos on Bilibili",
+      "params": [
+        {
+          "name": "keyword",
+          "type": "string",
+          "required": true,
+          "description": "Search keyword"
+        },
+        {
+          "name": "page",
+          "type": "integer",
+          "required": false,
+          "default": 1,
+          "description": "Page number"
+        },
+        {
+          "name": "page_size",
+          "type": "integer",
+          "required": false,
+          "default": 20,
+          "description": "Results per page (max 50)"
+        }
+      ]
+    },
+    {
+      "path": "/bilibili/search",
+      "method": "POST",
+      "description": "Search videos on Bilibili (POST)",
+      "params": [
+        {
+          "name": "keyword",
+          "type": "string",
+          "required": true,
+          "description": "Search keyword"
+        },
+        {
+          "name": "page",
+          "type": "integer",
+          "required": false,
+          "default": 1,
+          "description": "Page number"
+        },
+        {
+          "name": "page_size",
+          "type": "integer",
+          "required": false,
+          "default": 20,
+          "description": "Results per page (max 50)"
+        }
+      ]
+    },
+    {
+      "path": "/youdaolittlep/v1/user/balance",
+      "method": "GET",
+      "description": "Get user balance information (requires token)",
+      "auth": "Bearer token"
+    },
+    {
+      "path": "/youdaolittlep/v1/models",
+      "method": "GET",
+      "description": "List available models (requires token)",
+      "auth": "Bearer token"
+    },
+    {
+      "path": "/youdaolittlep/v1/chat/completions",
+      "method": "POST",
+      "description": "Chat completions (requires token)",
+      "auth": "Bearer token",
+      "params": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": false,
+          "default": "doubao-1.5-pro-32k",
+          "description": "Model name"
+        },
+        {
+          "name": "messages",
+          "type": "array",
+          "required": true,
+          "description": "Chat messages"
+        },
+        {
+          "name": "stream",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Stream response"
+        },
+        {
+          "name": "max_tokens",
+          "type": "integer",
+          "required": false,
+          "description": "Maximum tokens"
+        }
+      ]
+    },
+    {
+      "path": "/youdaolittlep/v1/audio/speech",
+      "method": "POST",
+      "description": "Text-to-speech (requires token)",
+      "auth": "Bearer token",
+      "params": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "description": "TTS model (youxiaoshi-tts or youxiaojin-tts)"
+        },
+        {
+          "name": "input",
+          "type": "string",
+          "required": true,
+          "description": "Text to convert to speech"
+        },
+        {
+          "name": "voice",
+          "type": "string",
+          "required": false,
+          "description": "Voice name"
+        }
+      ]
+    },
+    {
+      "path": "/text2img/data/{id}",
+      "method": "GET",
+      "description": "Get generated image by ID"
+    },
+    {
+      "path": "/text2img/generate",
+      "method": "POST",
+      "description": "Generate image from HTML or Jinja2 template",
+      "params": [
+        {
+          "name": "html",
+          "type": "string",
+          "required": false,
+          "description": "HTML content"
+        },
+        {
+          "name": "tmpl",
+          "type": "string",
+          "required": false,
+          "description": "Jinja2 template string"
+        },
+        {
+          "name": "tmplname",
+          "type": "string",
+          "required": false,
+          "description": "Template name from tmpl folder"
+        },
+        {
+          "name": "tmpldata",
+          "type": "object",
+          "required": false,
+          "description": "Template data"
+        },
+        {
+          "name": "options",
+          "type": "object",
+          "required": false,
+          "description": "Screenshot options"
+        },
+        {
+          "name": "return_json",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Return as JSON"
+        }
+      ]
+    },
+    {
+      "path": "/monitors",
+      "method": "GET",
+      "description": "List all monitors (requires token)",
+      "auth": "Bearer token"
+    },
+    {
+      "path": "/monitors",
+      "method": "POST",
+      "description": "Create a new monitor (requires token)",
+      "auth": "Bearer token",
+      "params": [
+        {
+          "name": "method",
+          "type": "string",
+          "required": true,
+          "description": "HTTP method (GET or POST)"
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "required": true,
+          "description": "URL to monitor"
+        },
+        {
+          "name": "data",
+          "type": "string",
+          "required": false,
+          "description": "POST data"
+        },
+        {
+          "name": "frequency",
+          "type": "integer",
+          "required": false,
+          "default": 30,
+          "description": "Check frequency in seconds"
+        }
+      ]
+    },
+    {
+      "path": "/monitors/{monitor_id}",
+      "method": "DELETE",
+      "description": "Delete a monitor (requires token)",
+      "auth": "Bearer token"
+    },
+    {
+      "path": "/snake",
+      "method": "GET",
+      "description": "Snake game - HTML interface"
+    },
+    {
+      "path": "/2048",
+      "method": "GET",
+      "description": "2048 game - HTML interface"
+    }
+  ]
+}
+
