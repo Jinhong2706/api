@@ -77,7 +77,7 @@ async def robots_txt():
 async def favicon():
     return FileResponse(os.path.join(BASE_DIR, 'favicon.ico'))
 
-app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/snake"), html=True), name="snake")
+app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/Snake"), html=True), name="snake")
 app.mount("/2048", StaticFiles(directory=os.path.join(BASE_DIR, "static/2048"), html=True), name="2048")
 
 if __name__ == "__main__":

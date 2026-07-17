@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#081310">
+<title>贪吃蛇 · Jinhong270</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1 class="app-title">贪吃蛇</h1>
+    <div class="score-panel">
+      <div class="score-chip">
+        <span class="score-chip-label">分数</span>
+        <span class="score-chip-value" id="currentScore">0</span>
+      </div>
+      <div class="score-chip score-chip-best">
+        <span class="score-chip-label">最高分</span>
+        <span class="score-chip-value" id="bestScore">0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="stage" id="stage">
+      <div class="canvas-frame" id="canvasFrame">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="overlay" id="overlayIdle">
+          <button class="play-button" id="startBtn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <span>开始游戏</span>
+          </button>
+          <p class="overlay-hint">点击画布或按空格键开始</p>
+        </div>
+
+        <div class="overlay" id="overlayPaused">
+          <div class="pause-glyph"><span></span><span></span></div>
+          <p class="overlay-title">已暂停</p>
+          <p class="overlay-hint">点击画布或按空格键继续</p>
+        </div>
+
+        <div class="overlay" id="overlayGameOver">
+          <p class="overlay-title">游戏结束</p>
+          <p class="overlay-score">得分 <span id="finalScore">0</span></p>
+          <span class="new-best-badge" id="newBestBadge">新纪录</span>
+          <button class="restart-button" id="restartFromOverBtn">再来一局</button>
+        </div>
+
+        <div class="toast" id="toast"></div>
+      </div>
+
+      <div class="dpad" id="dpad">
+        <button class="dpad-btn dpad-up" data-dir="up" aria-label="向上">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
+        </button>
+        <button class="dpad-btn dpad-left" data-dir="left" aria-label="向左">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
+        </button>
+        <button class="dpad-btn dpad-right" data-dir="right" aria-label="向右">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
+        </button>
+        <button class="dpad-btn dpad-down" data-dir="down" aria-label="向下">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <aside class="controls-panel">
+      <section class="control-group">
+        <div class="control-group-title">速度</div>
+        <div class="mode-selector" id="modeSelector">
+          <button class="mode-btn" data-speed="180">慢速</button>
+          <button class="mode-btn active" data-speed="130">正常</button>
+          <button class="mode-btn" data-speed="90">快速</button>
+          <button class="mode-btn" data-speed="60">极速</button>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <div class="control-group-title">背景色</div>
+        <div class="color-swatches" id="colorSwatches">
+          <div class="swatch active" data-color="#0b0b0b" style="background:#0b0b0b;" title="经典黑"></div>
+          <div class="swatch" data-color="#08131f" style="background:#08131f;" title="深邃蓝"></div>
+          <div class="swatch" data-color="#071a10" style="background:#071a10;" title="暗夜绿"></div>
+          <div class="swatch" data-color="#150c1f" style="background:#150c1f;" title="神秘紫"></div>
+          <div class="swatch" data-color="#17191b" style="background:#17191b;" title="石墨灰"></div>
+          <div class="swatch" data-color="#0d1b26" style="background:#0d1b26;" title="深海蓝"></div>
+          <div class="swatch" data-color="#200d0d" style="background:#200d0d;" title="暗红褐"></div>
+          <div class="swatch" data-color="#0d2016" style="background:#0d2016;" title="丛林绿"></div>
+          <div class="swatch" data-color="#221708" style="background:#221708;" title="古铜色"></div>
+        </div>
+      </section>
+
+      <section class="control-group button-group">
+        <button class="action-btn primary" id="restartBtn">开始游戏</button>
+        <button class="action-btn secondary" id="pauseBtn" disabled>
+          <span class="btn-icon icon-pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></span>
+          <span class="btn-icon icon-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+          <span class="btn-label">暂停</span>
+        </button>
+        <button class="action-btn ghost" id="toggleDpadBtn">显示方向键</button>
+      </section>
+
+      <p class="hint-text" id="hint"></p>
+    </aside>
+  </main>
+</div>
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/input.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

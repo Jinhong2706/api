@@ -1,0 +1,88 @@
+.app{
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  padding:max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+}
+.app-header{
+  width:100%;
+  max-width:1080px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.app-title{
+  font-weight:900;
+  font-size:clamp(1.25rem, 3.4vw, 1.85rem);
+  letter-spacing:0.16em;
+  background:linear-gradient(135deg, var(--snake-head), var(--teal));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  filter:drop-shadow(0 0 18px rgba(95,232,154,0.28));
+}
+.score-panel{display:flex;gap:10px;}
+.score-chip{
+  background:linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-sm);
+  padding:6px 16px;
+  min-width:76px;
+  text-align:center;
+  backdrop-filter:blur(8px);
+}
+.score-chip-label{
+  font-size:0.62rem;
+  letter-spacing:0.14em;
+  color:var(--text-muted);
+  display:block;
+}
+.score-chip-value{
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:1.35rem;
+  font-variant-numeric:tabular-nums;
+  display:inline-block;
+}
+.score-chip-best .score-chip-value{color:var(--gold);text-shadow:0 0 16px rgba(255,203,87,0.4);}
+.score-chip-value.bump{animation:scoreBump 0.32s ease;}
+@keyframes scoreBump{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.35);}
+  100%{transform:scale(1);}
+}
+.app-main{
+  width:100%;
+  max-width:1080px;
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.stage{
+  flex:1;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+}
+.canvas-frame{
+  position:relative;
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  background:#04120b;
+  box-shadow:var(--shadow-deep), inset 0 0 0 1px var(--panel-border), 0 0 70px rgba(95,232,154,0.07);
+  touch-action:none;
+  cursor:pointer;
+  flex-shrink:0;
+}
+canvas{display:block;}
