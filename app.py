@@ -86,7 +86,7 @@ async def status():
 async def robots_txt():
     return FileResponse(os.path.join(BASE_DIR, "robots.txt"))
 
-app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/snake"), html=True), name="snake")
+app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/Snake"), html=True), name="Snake")
 app.mount("/2048", StaticFiles(directory=os.path.join(BASE_DIR, "static/2048"), html=True), name="2048")
 
 if __name__ == "__main__":
